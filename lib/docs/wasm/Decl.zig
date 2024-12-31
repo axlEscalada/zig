@@ -213,7 +213,7 @@ pub fn findFirstDocComment(ast: *const Ast, token: Ast.TokenIndex) Ast.TokenInde
 /// Successively looks up each component.
 pub fn find(search_string: []const u8) Decl.Index {
     var path_components = std.mem.splitScalar(u8, search_string, '.');
-    const file = Walk.modules.get(path_components.first()) orelse return .none;
+    const file = Walk.modules.get(path_components.next().?) orelse return .none;
     var current_decl_index = file.findRootDecl();
     while (path_components.next()) |component| {
         while (true) switch (current_decl_index.get().categorize()) {

@@ -1097,7 +1097,7 @@ const TestManifest = struct {
 
             // Parse key=value(s)
             var kv_it = std.mem.splitScalar(u8, trimmed, '=');
-            const key = kv_it.first();
+            const key = kv_it.next().?;
             if (!valid_keys.has(key)) return error.InvalidKey;
             try manifest.config_map.putNoClobber(key, kv_it.next() orelse return error.MissingValuesForConfig);
         }
@@ -1268,7 +1268,7 @@ fn knownFileExtension(filename: []const u8) bool {
     // Final check for .so.X, .so.X.Y, .so.X.Y.Z.
     // From `Compilation.hasSharedLibraryExt`.
     var it = std.mem.splitScalar(u8, filename, '.');
-    _ = it.first();
+    _ = it.next();
     var so_txt = it.next() orelse return false;
     while (!std.mem.eql(u8, so_txt, "so")) {
         so_txt = it.next() orelse return false;

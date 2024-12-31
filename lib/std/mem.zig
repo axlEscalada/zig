@@ -3040,18 +3040,19 @@ pub fn SplitIterator(comptime T: type, comptime delimiter_type: DelimiterType) t
         /// Returns a slice of the first field. This never fails.
         /// Call this only to get the first field and then use `next` to get all subsequent fields.
         pub fn first(self: *Self) []const T {
-            assert(self.index.? == 0);
-            return self.next().?;
+            const end = if (self.nextDelimiterIndexFromPosition(0)) |delim_start| blk: {
+                break :blk delim_start;
+            } else blk: {
+                break :blk self.buffer.len;
+            };
+            return self.buffer[0..end];
         }
 
         /// Returns a slice of the next field, or null if splitting is complete.
         pub fn next(self: *Self) ?[]const T {
             const start = self.index orelse return null;
-            const end = if (switch (delimiter_type) {
-                .sequence => indexOfPos(T, self.buffer, start, self.delimiter),
-                .any => indexOfAnyPos(T, self.buffer, start, self.delimiter),
-                .scalar => indexOfScalarPos(T, self.buffer, start, self.delimiter),
-            }) |delim_start| blk: {
+
+            const end = if (self.nextDelimiterIndexFromPosition(start)) |delim_start| blk: {
                 self.index = delim_start + switch (delimiter_type) {
                     .sequence => self.delimiter.len,
                     .any, .scalar => 1,
@@ -3061,7 +3062,21 @@ pub fn SplitIterator(comptime T: type, comptime delimiter_type: DelimiterType) t
                 self.index = null;
                 break :blk self.buffer.len;
             };
+
             return self.buffer[start..end];
+        }
+
+        fn nextDelimiterIndexFromPosition(self: *Self, start: usize) ?usize {
+            const end = if (switch (delimiter_type) {
+                .sequence => indexOfPos(T, self.buffer, start, self.delimiter),
+                .any => indexOfAnyPos(T, self.buffer, start, self.delimiter),
+                .scalar => indexOfScalarPos(T, self.buffer, start, self.delimiter),
+            }) |delim_start| blk: {
+                break :blk delim_start;
+            } else blk: {
+                break :blk null;
+            };
+            return end;
         }
 
         /// Returns a slice of the next field, or null if splitting is complete.

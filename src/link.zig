@@ -164,7 +164,7 @@ pub const Diags = struct {
                 }
 
                 var split = mem.splitSequence(u8, line, "error: ");
-                _ = split.first();
+                _ = split.next();
 
                 const duped_msg = try std.fmt.allocPrint(gpa, "{s}: {s}", .{ prefix, split.rest() });
                 errdefer gpa.free(duped_msg);

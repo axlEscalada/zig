@@ -88,7 +88,7 @@ pub fn parse(text: []const u8) !Version {
     const required = text[0..(extra_index orelse text.len)];
     var it = std.mem.splitScalar(u8, required, '.');
     var ver = Version{
-        .major = try parseNum(it.first()),
+        .major = try parseNum(it.next() orelse return error.InvalidVersion),
         .minor = try parseNum(it.next() orelse return error.InvalidVersion),
         .patch = try parseNum(it.next() orelse return error.InvalidVersion),
     };

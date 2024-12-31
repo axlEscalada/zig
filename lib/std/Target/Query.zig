@@ -208,7 +208,7 @@ pub fn parse(args: ParseOptions) !Query {
     };
 
     var it = mem.splitScalar(u8, args.arch_os_abi, '-');
-    const arch_name = it.first();
+    const arch_name = it.next() orelse return error.InvalidVersion;
     const arch_is_native = mem.eql(u8, arch_name, "native");
     if (!arch_is_native) {
         result.cpu_arch = std.meta.stringToEnum(Target.Cpu.Arch, arch_name) orelse {
@@ -228,7 +228,7 @@ pub fn parse(args: ParseOptions) !Query {
     const opt_abi_text = it.next();
     if (opt_abi_text) |abi_text| {
         var abi_it = mem.splitScalar(u8, abi_text, '.');
-        const abi = std.meta.stringToEnum(Target.Abi, abi_it.first()) orelse
+        const abi = std.meta.stringToEnum(Target.Abi, abi_it.next().?) orelse
             return error.UnknownApplicationBinaryInterface;
         result.abi = abi;
         diags.abi = abi;
@@ -341,7 +341,7 @@ pub fn parseVersion(ver: []const u8) error{ InvalidVersion, Overflow }!SemanticV
         }
     }).parseVersionComponentInner;
     var version_components = mem.splitScalar(u8, ver, '.');
-    const major = version_components.first();
+    const major = version_components.next() orelse return error.InvalidVersion;
     const minor = version_components.next() orelse return error.InvalidVersion;
     const patch = version_components.next() orelse "0";
     if (version_components.next() != null) return error.InvalidVersion;
@@ -531,7 +531,7 @@ pub fn setGnuLibCVersion(self: *Query, major: u32, minor: u32, patch: u32) void 
 
 fn parseOs(result: *Query, diags: *ParseOptions.Diagnostics, text: []const u8) !void {
     var it = mem.splitScalar(u8, text, '.');
-    const os_name = it.first();
+    const os_name = it.next() orelse return error.InvalidVersion;
     diags.os_name = os_name;
     const os_is_native = mem.eql(u8, os_name, "native");
     if (!os_is_native) {
@@ -547,7 +547,7 @@ fn parseOs(result: *Query, diags: *ParseOptions.Diagnostics, text: []const u8) !
         .semver, .hurd, .linux => range: {
             var range_it = mem.splitSequence(u8, version_text, "...");
             result.os_version_min = .{
-                .semver = parseVersion(range_it.first()) catch |err| switch (err) {
+                .semver = parseVersion(range_it.next() orelse break :range) catch |err| switch (err) {
                     error.Overflow => return error.InvalidOperatingSystemVersion,
                     error.InvalidVersion => return error.InvalidOperatingSystemVersion,
                 },

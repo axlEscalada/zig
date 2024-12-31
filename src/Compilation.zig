@@ -6032,7 +6032,7 @@ pub fn hasSharedLibraryExt(filename: []const u8) bool {
     }
     // Look for .so.X, .so.X.Y, .so.X.Y.Z
     var it = mem.splitScalar(u8, filename, '.');
-    _ = it.first();
+    _ = it.next();
     var so_txt = it.next() orelse return false;
     while (!mem.eql(u8, so_txt, "so")) {
         so_txt = it.next() orelse return false;
